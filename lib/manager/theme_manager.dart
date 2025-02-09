@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class ThemeManager {
+  // Singleton instance
   static final ThemeManager _instance = ThemeManager._internal();
 
+  // Private constructor
   ThemeManager._internal();
 
+  // Getter for the singleton instance
   static ThemeManager get instance => _instance;
 
   // Method channel for theme communication
@@ -16,21 +19,8 @@ class ThemeManager {
   // Current theme mode
   ThemeMode _currentThemeMode = ThemeMode.light;
 
-  // Listener mekanizması için
-  final List<VoidCallback> _listeners = [];
-
   // Getter for current theme mode
   ThemeMode get currentThemeMode => _currentThemeMode;
-
-  // Listener ekleme metodu
-  void addListener(VoidCallback listener) {
-    _listeners.add(listener);
-  }
-
-  // Listener çıkarma metodu
-  void removeListener(VoidCallback listener) {
-    _listeners.remove(listener);
-  }
 
   // Theme change method
   Future<void> toggleTheme() async {
@@ -46,12 +36,7 @@ class ThemeManager {
       _currentThemeMode =
           newThemeMode == 'dark' ? ThemeMode.dark : ThemeMode.light;
 
-      log('Tema değiştirildi: $newThemeMode');
-
-      // Tema değiştiğinde tüm listener'ları çağır
-      for (var listener in _listeners) {
-        listener();
-      }
+      log('Tema değiştirildi: $newThemeMode $currentThemeMode');
     } on PlatformException catch (e) {
       log('Tema değişikliği hatası: ${e.message}');
     }
@@ -61,12 +46,16 @@ class ThemeManager {
   ThemeData getThemeData() {
     return _currentThemeMode == ThemeMode.light
         ? ThemeData.light().copyWith(
-            scaffoldBackgroundColor: Colors.blue,
-            appBarTheme: const AppBarTheme(color: Colors.blue),
+            scaffoldBackgroundColor: Colors.blue.shade100,
+            appBarTheme: AppBarTheme(
+              color: Colors.blue,
+            ),
           )
         : ThemeData.dark().copyWith(
-            scaffoldBackgroundColor: Colors.red,
-            appBarTheme: const AppBarTheme(color: Colors.red),
+            scaffoldBackgroundColor: Colors.grey.shade900,
+            appBarTheme: AppBarTheme(
+              color: Colors.grey.shade800,
+            ),
           );
   }
 }
