@@ -1,7 +1,5 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:method_channel_example/manager/theme_manager.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,82 +12,80 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const ThemeChangePage(),
+      theme: ThemeManager.instance.getThemeData(),
+      home: ThemeListenerWidget(),
     );
   }
 }
 
-class ThemeChangePage extends StatefulWidget {
-  const ThemeChangePage({super.key});
+class ThemeListenerWidget extends StatefulWidget {
+  const ThemeListenerWidget({super.key});
 
   @override
-  State<ThemeChangePage> createState() => _ThemeChangePageState();
+  _ThemeListenerWidgetState createState() => _ThemeListenerWidgetState();
 }
 
-class _ThemeChangePageState extends State<ThemeChangePage> {
-  String _mode = "light";
-  static const platform = MethodChannel('com.method_channel_example/theme');
+class _ThemeListenerWidgetState extends State<ThemeListenerWidget> {
+  // ThemeManager'ın mevcut tema durumunu takip et
+  ThemeMode _currentTheme = ThemeManager.instance.currentThemeMode;
 
-  Future<void> _changeTheme() async {
-    // Eğer şu anki mod "light" ise "dark", "dark" ise "light" olarak değişecek
-    String newThemeMode = _mode == "light" ? "dark" : "light";
+  @override
+  void initState() {
+    super.initState();
+    // ThemeManager'ın tema değişikliklerini dinle
+    _listenToThemeChanges();
+  }
 
-    // Debug için geçerli mod bilgisini logla
-    log('Mevcut mod: $_mode');
-    log('Yeni mod: $newThemeMode');
-
-    try {
-      // Method channel üzerinden tema değişikliği isteği gönder
-      final result = await platform.invokeMethod('changeTheme', newThemeMode);
-
-      // Gelen sonucu logla
-      log('Native taraftan gelen sonuç: $result');
-
-      // State'i güncelle
+  void _listenToThemeChanges() {
+    // Tema değişikliği olduğunda state'i güncelle
+    ThemeManager.instance.addListener(() {
       setState(() {
-        _mode = result;
+        _currentTheme = ThemeManager.instance.currentThemeMode;
       });
-    } on PlatformException catch (e) {
-      // Herhangi bir hata durumunda konsola hata mesajını yazdır
-      print('Tema değişikliği hatası: ${e.message}');
-    }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      // Tema moduna göre tema ayarla
-      theme: _mode == 'light'
-          ? ThemeData.light().copyWith(
-              scaffoldBackgroundColor: Colors.blue,
-              appBarTheme: const AppBarTheme(color: Colors.blue),
-            )
-          : ThemeData.dark().copyWith(
-              scaffoldBackgroundColor: Colors.red,
-              appBarTheme: const AppBarTheme(color: Colors.red),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Tema Dinleyicisi'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Anlık tema bilgisini göster
+            Text(
+              'Şu anki tema: ${_currentTheme.name}',
+              style: TextStyle(fontSize: 20),
             ),
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Theme Change Example'),
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Şu anki tema: ${_mode == 'dark' ? 'Dark Mode' : 'Light Mode'}',
-                style: const TextStyle(fontSize: 20),
+            SizedBox(height: 20),
+            // Tema değiştirme butonu
+            ElevatedButton(
+              onPressed: () {
+                ThemeManager.instance.toggleTheme();
+              },
+              child: Text('Temayı Değiştir'),
+            ),
+            SizedBox(height: 20),
+            // Tema durumuna göre farklı widget gösterimi
+            AnimatedContainer(
+              duration: Duration(milliseconds: 300),
+              color: _currentTheme == ThemeMode.light
+                  ? Colors.blue.shade100
+                  : Colors.grey.shade900,
+              padding: EdgeInsets.all(20),
+              child: Text(
+                'Dinamik Tema Örneği',
+                style: TextStyle(
+                  color: _currentTheme == ThemeMode.light
+                      ? Colors.black
+                      : Colors.white,
+                ),
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _changeTheme,
-                child: const Text('Temayı Değiştir'),
-              ),
-            ],
-          ),
+            )
+          ],
         ),
       ),
     );

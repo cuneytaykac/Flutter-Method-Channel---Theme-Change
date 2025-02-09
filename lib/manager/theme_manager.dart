@@ -16,8 +16,21 @@ class ThemeManager {
   // Current theme mode
   ThemeMode _currentThemeMode = ThemeMode.light;
 
+  // Listener mekanizması için
+  final List<VoidCallback> _listeners = [];
+
   // Getter for current theme mode
   ThemeMode get currentThemeMode => _currentThemeMode;
+
+  // Listener ekleme metodu
+  void addListener(VoidCallback listener) {
+    _listeners.add(listener);
+  }
+
+  // Listener çıkarma metodu
+  void removeListener(VoidCallback listener) {
+    _listeners.remove(listener);
+  }
 
   // Theme change method
   Future<void> toggleTheme() async {
@@ -34,6 +47,11 @@ class ThemeManager {
           newThemeMode == 'dark' ? ThemeMode.dark : ThemeMode.light;
 
       log('Tema değiştirildi: $newThemeMode');
+
+      // Tema değiştiğinde tüm listener'ları çağır
+      for (var listener in _listeners) {
+        listener();
+      }
     } on PlatformException catch (e) {
       log('Tema değişikliği hatası: ${e.message}');
     }
@@ -51,7 +69,4 @@ class ThemeManager {
             appBarTheme: const AppBarTheme(color: Colors.red),
           );
   }
-
-  // Check if current theme is dark
-  bool get isDarkMode => _currentThemeMode == ThemeMode.dark;
 }
