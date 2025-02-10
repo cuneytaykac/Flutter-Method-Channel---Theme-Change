@@ -14,7 +14,7 @@ class ThemeManager {
   static ThemeManager get instance => _instance;
 
   // Method channel for theme communication
-  static const platform = MethodChannel('com.method_channel_example/theme');
+  final platform = const MethodChannel('com.method_channel_example/theme');
 
   // Current theme mode
   ThemeMode _currentThemeMode = ThemeMode.light;
@@ -38,6 +38,7 @@ class ThemeManager {
 
       log('Tema değiştirildi: $newThemeMode $currentThemeMode');
     } on PlatformException catch (e) {
+      PlatformException(code: e.code, details: e.details, message: e.message);
       log('Tema değişikliği hatası: ${e.message}');
     }
   }
